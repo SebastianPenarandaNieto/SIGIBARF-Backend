@@ -1,0 +1,83 @@
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+htmlcov/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+# Ignore local settings, database and runtime files
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+*.log
+
+# Media and static collected files
+media/
+staticfiles/
+
+# Environment variables file
+.env
+.env.*
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Editor temporary files
+*~
+*.swp
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Celery
+celerybeat-schedule
+
+# MyPy
+.mypy_cache/
+
+# Pyre
+.pyre/
+
+# Node (if any frontend added later)
+node_modules/
+
