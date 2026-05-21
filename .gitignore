@@ -43,6 +43,7 @@ staticfiles/
 # Environment variables file
 .env
 .env.*
+!.env.example
 
 # Virtual environments
 venv/
