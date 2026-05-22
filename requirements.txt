@@ -17,3 +17,4 @@ resend==2.10.0
 sqlparse==0.5.5
 typing_extensions==4.15.0
 urllib3==2.7.0
+psycopg2-binary

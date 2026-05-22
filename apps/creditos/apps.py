@@ -2,4 +2,6 @@ from django.apps import AppConfig
 
 
 class CreditosConfig(AppConfig):
-    name = 'apps.creditos'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.creditos"
+    label = "accounts"
