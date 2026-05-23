@@ -70,7 +70,7 @@ class ProductoIngrediente(models.Model):
         ordering = ['id']
 
     def __str__(self):
-        return f"{self.id_producto} - {self.id_ingrediente} : {self.porcentaje_ingrediente}%"
+        return f"{self.id_producto} - {self.id_ingrediente} : porcetaje del ingrediente en el producto {self.porcentaje_ingrediente}%"
 
 
 class Produccion(models.Model):
