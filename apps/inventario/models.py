@@ -59,7 +59,6 @@ class ProductoIngrediente(models.Model):
     id = models.AutoField(primary_key=True)
     id_producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     id_ingrediente = models.ForeignKey(Ingrediente, on_delete=models.CASCADE)
-    cantidad_producida = models.PositiveIntegerField()
     cantidad_ingrediente = models.DecimalField(max_digits=10, decimal_places=2)
     porcentaje_ingrediente = models.DecimalField(max_digits=5, decimal_places=2)
 
@@ -70,7 +69,7 @@ class ProductoIngrediente(models.Model):
         ordering = ['id']
 
     def __str__(self):
-        return f"{self.id_producto} - {self.id_ingrediente} : porcetaje del ingrediente en el producto {self.porcentaje_ingrediente}%"
+        return f"{self.id_producto} - {self.id_ingrediente} : porcentaje del ingrediente en el producto {self.porcentaje_ingrediente}%"
 
 
 class Produccion(models.Model):
@@ -93,9 +92,9 @@ class MovimientoIngrediente(models.Model):
     id = models.AutoField(primary_key=True)
     id_ingrediente = models.ForeignKey(Ingrediente, on_delete=models.PROTECT)
     tipo_movimiento = models.CharField(max_length=10, choices=TIPO_MOVIMIENTO_CHOICES)
-    stock_anterior = models.PositiveIntegerField()
-    stock_posterior = models.PositiveIntegerField()
-    cantidad = models.PositiveIntegerField()
+    stock_anterior = models.DecimalField(max_digits=10, decimal_places=2)
+    stock_posterior = models.DecimalField(max_digits=10, decimal_places=2)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
     fecha = models.DateTimeField(auto_now_add=True)
     comentarios = models.TextField(blank=True, null=True)
     

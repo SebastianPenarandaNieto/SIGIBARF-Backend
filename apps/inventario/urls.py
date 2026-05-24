@@ -10,6 +10,9 @@ router.register(r'movimientos-ingrediente', views.MovimientoIngredienteViewSet, 
 router.register(r'movimientos-producto', views.MovimientoProductoViewSet, basename='movimiento-producto')
 
 urlpatterns = [
+    path('public/productos/', views.ProductoPublicAPIView.as_view(), name='public-productos'),
+    path('public/ingredientes/', views.IngredientePublicAPIView.as_view(), name='public-ingredientes'),
+    path('public/producto-ingredientes/', views.ProductoIngredientePublicAPIView.as_view(), name='public-producto-ingredientes'),
     path('', include(router.urls)),
     path('producciones/', views.ProduccionAPIView.as_view(), name='producciones'),
 ]

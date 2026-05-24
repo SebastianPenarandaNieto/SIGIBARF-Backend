@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 
 from . import serializers
@@ -34,10 +34,40 @@ class MovimientoProductoViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MovimientoProductoSerializer
 
 
+class ProductoPublicAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        productos = models.Producto.objects.all()
+        serializer = serializers.ProductoSerializer(productos, many=True)
+        return Response(serializer.data)
+
+
+class IngredientePublicAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        ingredientes = models.Ingrediente.objects.all()
+        serializer = serializers.IngredientePublicSerializer(ingredientes, many=True)
+        return Response(serializer.data)
+
+
+class ProductoIngredientePublicAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        producto_ingredientes = models.ProductoIngrediente.objects.select_related(
+            'id_producto',
+            'id_ingrediente',
+        ).all()
+        serializer = serializers.ProductoIngredienteSerializer(producto_ingredientes, many=True)
+        return Response(serializer.data)
+
+
 class ProduccionAPIView(APIView):
 
     def get(self, request):
-        producciones = models.Produccion.objects.select_related('id_producto').order_by('-fecha')[:50]
+        producciones = models.Produccion.objects.select_related('id_producto').order_by('-fecha')
         serializer = serializers.ProduccionSerializer(producciones, many=True)
         return Response(serializer.data)
 
@@ -56,7 +86,7 @@ class ProduccionAPIView(APIView):
             produccion = services.crear_produccion(id_producto=int(id_producto), cantidad_producida=cantidad)
         except ValidationError as e:
             return Response(
-                {'detail': e.message if hasattr(e, 'message') else e.messages[0]},
+                {'detail': e.message},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except models.Producto.DoesNotExist:

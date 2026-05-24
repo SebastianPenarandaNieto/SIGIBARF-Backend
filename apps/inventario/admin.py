@@ -1,5 +1,27 @@
-from django.contrib import admin
+from django import forms
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from . import models
+from . import services
+
+
+class ProduccionAdminForm(forms.ModelForm):
+    class Meta:
+        model = models.Produccion
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        producto = cleaned_data.get('id_producto')
+        cantidad = cleaned_data.get('cantidad_producida')
+
+        if not self.instance.pk and producto and cantidad:
+            relaciones = models.ProductoIngrediente.objects.select_related('id_ingrediente').filter(
+                id_producto=producto
+            )
+            services.validar_stock_produccion(relaciones, cantidad)
+
+        return cleaned_data
 
 
 @admin.register(models.Ingrediente)
@@ -14,12 +36,35 @@ class ProductoAdmin(admin.ModelAdmin):
 
 @admin.register(models.ProductoIngrediente)
 class ProductoIngredienteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'id_producto', 'id_ingrediente', 'porcentaje_ingrediente')
+    list_display = ('id', 'id_producto', 'id_ingrediente', 'cantidad_ingrediente','porcentaje_ingrediente')
 
 
 @admin.register(models.Produccion)
 class ProduccionAdmin(admin.ModelAdmin):
+    form = ProduccionAdminForm
     list_display = ('id', 'id_producto', 'cantidad_producida', 'fecha')
+    readonly_fields = ('fecha',)
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            super().save_model(request, obj, form, change)
+            return
+
+        try:
+            produccion = services.crear_produccion(
+                id_producto=obj.id_producto_id,
+                cantidad_producida=obj.cantidad_producida,
+            )
+        except ValidationError as exc:
+            message = getattr(exc, 'message', None) or '; '.join(exc.messages)
+            self.message_user(request, message, level=messages.ERROR)
+            raise
+
+        obj.pk = produccion.pk
+        obj.id = produccion.id
+        obj.fecha = produccion.fecha
+        obj.id_producto = produccion.id_producto
+        obj._state.adding = False
 
 
 @admin.register(models.MovimientoIngrediente)

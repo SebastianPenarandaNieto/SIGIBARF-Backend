@@ -16,6 +16,12 @@ class IngredienteSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class IngredientePublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Ingrediente
+        exclude = ('proveedor',)
+
+
 class ProductoSerializer(serializers.ModelSerializer):
     nombre = serializers.CharField(validators=[my_validators.validate_non_empty_string])
     precio = serializers.DecimalField(max_digits=10, decimal_places=2, validators=[my_validators.validate_positive_decimal_gt_zero])
@@ -28,7 +34,6 @@ class ProductoSerializer(serializers.ModelSerializer):
 
 
 class ProductoIngredienteSerializer(serializers.ModelSerializer):
-    cantidad_producida = serializers.IntegerField(min_value=1)
     cantidad_ingrediente = serializers.DecimalField(validators=[my_validators.validate_positive_decimal_gt_zero], max_digits=10, decimal_places=2)
     porcentaje_ingrediente = serializers.DecimalField(validators=[my_validators.validate_percentage], max_digits=5, decimal_places=2)
 
@@ -47,9 +52,13 @@ class ProduccionSerializer(serializers.ModelSerializer):
 
 
 class MovimientoIngredienteSerializer(serializers.ModelSerializer):
-    stock_anterior = serializers.IntegerField(read_only=True)
-    stock_posterior = serializers.IntegerField(read_only=True)
-    cantidad = serializers.IntegerField(min_value=1)
+    stock_anterior = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    stock_posterior = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    cantidad = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[my_validators.validate_positive_decimal_gt_zero],
+    )
     fecha = serializers.DateField(read_only=True)
 
     class Meta:
@@ -66,4 +75,3 @@ class MovimientoProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.MovimientoProducto
         fields = '__all__'
-

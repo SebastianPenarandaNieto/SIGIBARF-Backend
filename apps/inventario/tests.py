@@ -1,78 +1,89 @@
-from django.test import TestCase
+from decimal import Decimal
+
+from django.contrib.admin.sites import AdminSite
+from django.test import RequestFactory, TestCase
+
+from apps.inventario import admin as inventario_admin
+from apps.inventario import services
 from apps.inventario.models import (
     Ingrediente,
+    MovimientoIngrediente,
+    MovimientoProducto,
+    Produccion,
     Producto,
-    ProductoIngrediente
+    ProductoIngrediente,
 )
 
-class ProductoIngredienteTest(TestCase):
+
+class ProduccionStockTest(TestCase):
 
     def setUp(self):
         self.azucar = Ingrediente.objects.create(
-            nombre="Azúcar",
+            nombre="Azucar",
             proveedor="Proveedor A",
-            stock_actual=100,
-            stock_minimo=10,
-            unidad_medida="kg"
+            stock_actual=Decimal("100.00"),
+            stock_minimo=Decimal("10.00"),
+            unidad_medida="kg",
         )
-
         self.agua = Ingrediente.objects.create(
             nombre="Agua",
             proveedor="Proveedor B",
-            stock_actual=500,
-            stock_minimo=50,
-            unidad_medida="l"
+            stock_actual=Decimal("500.00"),
+            stock_minimo=Decimal("50.00"),
+            unidad_medida="l",
         )
-
-        self.cocacola = Producto.objects.create(
-            nombre="Coca Cola",
-            precio=5000,
+        self.producto = Producto.objects.create(
+            nombre="Gaseosa",
+            precio=Decimal("5000.00"),
             stock_actual=20,
-            stock_minimo=5
+            stock_minimo=5,
         )
-
         ProductoIngrediente.objects.create(
-            id_producto=self.cocacola,
+            id_producto=self.producto,
             id_ingrediente=self.azucar,
-            cantidad_producida=100,
-            cantidad_ingrediente=10,
-            porcentaje_ingrediente=10
+            cantidad_ingrediente=Decimal("2.50"),
+            porcentaje_ingrediente=Decimal("10.00"),
         )
-
         ProductoIngrediente.objects.create(
-            id_producto=self.cocacola,
+            id_producto=self.producto,
             id_ingrediente=self.agua,
-            cantidad_producida=100,
-            cantidad_ingrediente=90,
-            porcentaje_ingrediente=90
+            cantidad_ingrediente=Decimal("1.00"),
+            porcentaje_ingrediente=Decimal("90.00"),
         )
 
-    def test_relaciones_producto(self):
+    def test_crear_produccion_actualiza_stock_y_movimientos(self):
+        produccion = services.crear_produccion(self.producto.id, 4)
 
-        relaciones = ProductoIngrediente.objects.select_related(
-            'id_ingrediente'
-        ).filter(
-            id_producto=self.cocacola
-        )
+        self.assertEqual(produccion.cantidad_producida, 4)
 
-        self.assertEqual(relaciones.count(), 2)
+        self.azucar.refresh_from_db()
+        self.agua.refresh_from_db()
+        self.producto.refresh_from_db()
 
-        for relacion in relaciones:
-            print("----- RELACION -----")
-            print("ID relación:", relacion.id)
+        self.assertEqual(self.azucar.stock_actual, Decimal("90.00"))
+        self.assertEqual(self.agua.stock_actual, Decimal("496.00"))
+        self.assertEqual(self.producto.stock_actual, 24)
+        self.assertEqual(MovimientoIngrediente.objects.count(), 2)
+        self.assertEqual(MovimientoProducto.objects.count(), 1)
 
-            print("Producto:")
-            print("  id:", relacion.id_producto.id)
-            print("  nombre:", relacion.id_producto.nombre)
+        movimiento_azucar = MovimientoIngrediente.objects.get(id_ingrediente=self.azucar)
+        self.assertEqual(movimiento_azucar.cantidad, Decimal("10.00"))
+        self.assertEqual(movimiento_azucar.stock_anterior, Decimal("100.00"))
+        self.assertEqual(movimiento_azucar.stock_posterior, Decimal("90.00"))
 
-            print("Ingrediente:")
-            print("  id:", relacion.id_ingrediente.id)
-            print("  nombre:", relacion.id_ingrediente.nombre)
-            print("  proveedor:", relacion.id_ingrediente.proveedor)
-            print("  stock_actual:", relacion.id_ingrediente.stock_actual)
-            print("  unidad:", relacion.id_ingrediente.unidad_medida)
+    def test_admin_crea_produccion_usando_servicio_de_stock(self):
+        request = RequestFactory().post("/admin/inventario/produccion/add/")
+        model_admin = inventario_admin.ProduccionAdmin(Produccion, AdminSite())
+        obj = Produccion(id_producto=self.producto, cantidad_producida=3)
 
-            print("Campos intermedios:")
-            print("  cantidad_producida:", relacion.cantidad_producida)
-            print("  cantidad_ingrediente:", relacion.cantidad_ingrediente)
-            print("  porcentaje:", relacion.porcentaje_ingrediente)
+        model_admin.save_model(request, obj, form=None, change=False)
+
+        self.assertIsNotNone(obj.pk)
+        self.assertEqual(Produccion.objects.count(), 1)
+
+        self.azucar.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(self.azucar.stock_actual, Decimal("92.50"))
+        self.assertEqual(self.producto.stock_actual, 23)
+        self.assertEqual(MovimientoIngrediente.objects.count(), 2)
+        self.assertEqual(MovimientoProducto.objects.count(), 1)

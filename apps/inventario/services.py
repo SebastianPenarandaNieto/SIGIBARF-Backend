@@ -1,5 +1,3 @@
-import math
-from decimal import Decimal
 from django.db import transaction
 from django.core.exceptions import ValidationError
 
@@ -15,17 +13,9 @@ def crear_produccion(id_producto, cantidad_producida):
         producto = models.Producto.objects.select_for_update().get(pk=id_producto)
 
         # traer ingredientes del producto
-        relacion_ings = models.ProductoIngrediente.objects.select_related('id_ingrediente').filter(id_producto=producto)
+        relacion_ings = models.ProductoIngrediente.objects.select_related('id_ingrediente').filter(id_producto=id_producto)
 
-        # validar stock suficiente
-        insuficientes = []
-        for rel in relacion_ings:
-            if rel.id_ingrediente.stock_actual < rel.cantidad_ingrediente*cantidad_producida:
-                insuficientes.append((rel.id_ingrediente, rel.cantidad_ingrediente*cantidad_producida))
-
-        if insuficientes:
-            ing, req = insuficientes[0]
-            raise ValidationError(f'Ingrediente "{ing.nombre}" (id={ing.id}) no tiene stock suficiente: requerido {req}, disponible {ing.stock_actual}')
+        validar_stock_produccion(relacion_ings, cantidad_producida)
 
         # descontar ingredientes y crear movimientos
         for rel in relacion_ings:
@@ -34,7 +24,7 @@ def crear_produccion(id_producto, cantidad_producida):
             ingrediente.stock_actual = stock_anterior - rel.cantidad_ingrediente*cantidad_producida
             ingrediente.save()
 
-            mov = models.MovimientoIngrediente.objects.create(
+            models.MovimientoIngrediente.objects.create(
                 id_ingrediente=ingrediente,
                 tipo_movimiento='SALIDA',
                 stock_anterior=stock_anterior,
@@ -48,7 +38,7 @@ def crear_produccion(id_producto, cantidad_producida):
         producto.stock_actual = stock_anterior_prod + cantidad_producida
         producto.save()
 
-        movimiento_producto = models.MovimientoProducto.objects.create(
+        models.MovimientoProducto.objects.create(
             id_producto=producto,
             tipo_movimiento='ENTRADA',
             stock_anterior=stock_anterior_prod,
@@ -64,3 +54,17 @@ def crear_produccion(id_producto, cantidad_producida):
         )
 
         return produccion
+
+
+def validar_stock_produccion(relacion_ings, cantidad_producida):
+    insuficientes = []
+    for rel in relacion_ings:
+        requerido = rel.cantidad_ingrediente * cantidad_producida
+        if rel.id_ingrediente.stock_actual < requerido:
+            insuficientes.append((rel.id_ingrediente, requerido))
+
+    if insuficientes:
+        ing, req = insuficientes[0]
+        raise ValidationError(
+            f'Ingrediente "{ing.nombre}" (id={ing.id}) no tiene stock suficiente: requerido {req}, disponible {ing.stock_actual}'
+        )
