@@ -31,7 +31,7 @@ class IngredienteAdmin(admin.ModelAdmin):
 
 @admin.register(models.Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'precio', 'stock_actual', 'stock_minimo', 'inhabilitado')
+    list_display = ('id', 'nombre', 'precio', 'stock_actual', 'stock_minimo', 'inhabilitado', 'descripcion')
 
 
 @admin.register(models.ProductoIngrediente)
@@ -69,9 +69,9 @@ class ProduccionAdmin(admin.ModelAdmin):
 
 @admin.register(models.MovimientoIngrediente)
 class MovimientoIngredienteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'id_ingrediente', 'tipo_movimiento', 'cantidad', 'stock_anterior', 'stock_posterior', 'fecha')
+    list_display = ('id', 'id_ingrediente', 'tipo_movimiento', 'cantidad', 'stock_anterior', 'stock_posterior', 'fecha', 'comentarios')
 
 
 @admin.register(models.MovimientoProducto)
 class MovimientoProductoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'id_producto', 'tipo_movimiento', 'cantidad', 'stock_anterior', 'stock_posterior', 'fecha')
+    list_display = ('id', 'id_producto', 'tipo_movimiento', 'cantidad', 'stock_anterior', 'stock_posterior', 'fecha', 'comentarios')

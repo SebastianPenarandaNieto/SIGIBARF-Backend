@@ -43,6 +43,7 @@ class Producto(models.Model):
     stock_actual = models.PositiveIntegerField()
     stock_minimo = models.PositiveIntegerField()
     inhabilitado = models.BooleanField(default=False)
+    descripcion = models.TextField(blank=True, null=True)
     ingredientes = models.ManyToManyField(Ingrediente, through='ProductoIngrediente', related_name='productos')
 
     class Meta:
@@ -92,9 +93,9 @@ class MovimientoIngrediente(models.Model):
     id = models.AutoField(primary_key=True)
     id_ingrediente = models.ForeignKey(Ingrediente, on_delete=models.PROTECT)
     tipo_movimiento = models.CharField(max_length=10, choices=TIPO_MOVIMIENTO_CHOICES)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
     stock_anterior = models.DecimalField(max_digits=10, decimal_places=2)
     stock_posterior = models.DecimalField(max_digits=10, decimal_places=2)
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
     fecha = models.DateTimeField(auto_now_add=True)
     comentarios = models.TextField(blank=True, null=True)
     
@@ -112,9 +113,9 @@ class MovimientoProducto(models.Model):
     id = models.AutoField(primary_key=True)
     id_producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     tipo_movimiento = models.CharField(max_length=10, choices=TIPO_MOVIMIENTO_CHOICES)
+    cantidad = models.PositiveIntegerField()
     stock_anterior = models.PositiveIntegerField()
     stock_posterior = models.PositiveIntegerField()
-    cantidad = models.PositiveIntegerField()
     fecha = models.DateTimeField(auto_now_add=True)
     comentarios = models.TextField(blank=True, null=True)
     
