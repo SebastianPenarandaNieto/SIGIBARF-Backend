@@ -1,8 +1,10 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.admin.sites import AdminSite
 from django.urls import reverse
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.inventario import admin as inventario_admin
@@ -78,11 +80,13 @@ class ProduccionStockTest(TestCase):
             cantidad_ingrediente=Decimal("1.00"),
             porcentaje_ingrediente=Decimal("90.00"),
         )
+        self.fecha_vencimiento = timezone.now() + timedelta(days=30)
 
     def test_crear_produccion_actualiza_stock_y_movimientos(self):
-        produccion = services.crear_produccion(self.producto.id, 4)
+        produccion = services.crear_produccion(self.producto.id, 4, self.fecha_vencimiento)
 
         self.assertEqual(produccion.cantidad_producida, 4)
+        self.assertEqual(produccion.fecha_vencimiento, self.fecha_vencimiento)
 
         self.azucar.refresh_from_db()
         self.agua.refresh_from_db()
@@ -102,7 +106,11 @@ class ProduccionStockTest(TestCase):
     def test_admin_crea_produccion_usando_servicio_de_stock(self):
         request = RequestFactory().post("/admin/inventario/produccion/add/")
         model_admin = inventario_admin.ProduccionAdmin(Produccion, AdminSite())
-        obj = Produccion(id_producto=self.producto, cantidad_producida=3)
+        obj = Produccion(
+            id_producto=self.producto,
+            cantidad_producida=3,
+            fecha_vencimiento=self.fecha_vencimiento,
+        )
 
         model_admin.save_model(request, obj, form=None, change=False)
 

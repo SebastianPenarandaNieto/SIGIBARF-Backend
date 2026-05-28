@@ -44,7 +44,8 @@ class ProductoIngredienteSerializer(serializers.ModelSerializer):
 
 class ProduccionSerializer(serializers.ModelSerializer):
     cantidad_producida = serializers.IntegerField(min_value=1)
-    fecha = serializers.DateField(read_only=True)
+    fecha_creacion = serializers.DateTimeField(read_only=True)
+    fecha_vencimiento = serializers.DateTimeField(required=True, allow_null=False, input_formats=['iso-8601', '%Y-%m-%d'])
 
     class Meta:
         model = models.Produccion

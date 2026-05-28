@@ -465,7 +465,8 @@ Relacion entre producto e ingrediente.
 | `id` | integer | No | Autogenerado. |
 | `id_producto` | integer | Si | Producto existente. |
 | `cantidad_producida` | integer | Si | Minimo `1`. |
-| `fecha` | date/datetime | No | Solo lectura; se genera automaticamente. El serializer actual la devuelve como fecha. |
+| `fecha_creacion` | datetime | No | Solo lectura; se genera automaticamente. |
+| `fecha_vencimiento` | datetime | Si | Fecha/hora de vencimiento. Acepta ISO 8601 o `YYYY-MM-DD`. |
 
 Al crear una produccion con `POST /api/inventario/producciones/`, el backend:
 
@@ -763,7 +764,7 @@ Limitacion actual:
 
 ### `GET /api/inventario/producciones/`
 
-Privado. Lista producciones ordenadas por `fecha` descendente.
+Privado. Lista producciones ordenadas por `fecha_creacion` descendente.
 
 Respuesta `200`:
 
@@ -772,7 +773,8 @@ Respuesta `200`:
   {
     "id": 1,
     "cantidad_producida": 10,
-    "fecha": "2026-05-24",
+    "fecha_creacion": "2026-05-24T13:30:00Z",
+    "fecha_vencimiento": "2026-06-24T00:00:00Z",
     "id_producto": 1
   }
 ]
@@ -787,7 +789,8 @@ Body:
 ```json
 {
   "id_producto": 1,
-  "cantidad_producida": 10
+  "cantidad_producida": 10,
+  "fecha_vencimiento": "2026-06-24"
 }
 ```
 
@@ -795,8 +798,10 @@ Validaciones:
 
 - `id_producto` es requerido.
 - `cantidad_producida` es requerida.
+- `fecha_vencimiento` es requerida.
 - `cantidad_producida` debe ser entero.
 - `cantidad_producida` debe ser mayor que `0`.
+- `fecha_vencimiento` debe ser una fecha/hora valida.
 - El producto debe existir.
 - Debe haber stock suficiente de ingredientes segun las relaciones `ProductoIngrediente`.
 
@@ -806,7 +811,8 @@ Respuesta `201`:
 {
   "id": 1,
   "cantidad_producida": 10,
-  "fecha": "2026-05-24",
+  "fecha_creacion": "2026-05-24T13:30:00Z",
+  "fecha_vencimiento": "2026-06-24T00:00:00Z",
   "id_producto": 1
 }
 ```
@@ -814,11 +820,15 @@ Respuesta `201`:
 Errores:
 
 ```json
-{"detail": "id_producto y cantidad_producida son requeridos."}
+{"detail": "id_producto, cantidad_producida y fecha_vencimiento son requeridos."}
 ```
 
 ```json
 {"detail": "cantidad_producida debe ser un entero."}
+```
+
+```json
+{"detail": "fecha_vencimiento debe ser una fecha/hora valida."}
 ```
 
 ```json

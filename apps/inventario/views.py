@@ -1,3 +1,4 @@
+from rest_framework import serializers as rest_serializers
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -67,23 +68,39 @@ class ProductoIngredientePublicAPIView(APIView):
 class ProduccionAPIView(APIView):
 
     def get(self, request):
-        producciones = models.Produccion.objects.select_related('id_producto').order_by('-fecha')
+        producciones = models.Produccion.objects.select_related('id_producto').order_by('-fecha_creacion')
         serializer = serializers.ProduccionSerializer(producciones, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         id_producto = request.data.get('id_producto')
         cantidad = request.data.get('cantidad_producida')
-        if id_producto is None or cantidad is None:
-            return Response({'detail': 'id_producto y cantidad_producida son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
+        fecha_vencimiento = request.data.get('fecha_vencimiento')
+        if id_producto is None or cantidad is None or fecha_vencimiento is None:
+            return Response({'detail': 'id_producto, cantidad_producida y fecha_vencimiento son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            id_producto = int(id_producto)
+        except Exception:
+            return Response({'detail': 'id_producto debe ser un entero.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             cantidad = int(cantidad)
         except Exception:
             return Response({'detail': 'cantidad_producida debe ser un entero.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        fecha_vencimiento_field = rest_serializers.DateTimeField(input_formats=['iso-8601', '%Y-%m-%d'])
         try:
-            produccion = services.crear_produccion(id_producto=int(id_producto), cantidad_producida=cantidad)
+            fecha_vencimiento = fecha_vencimiento_field.run_validation(fecha_vencimiento)
+        except rest_serializers.ValidationError:
+            return Response({'detail': 'fecha_vencimiento debe ser una fecha/hora valida.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            produccion = services.crear_produccion(
+                id_producto=id_producto,
+                cantidad_producida=cantidad,
+                fecha_vencimiento=fecha_vencimiento,
+            )
         except ValidationError as e:
             return Response(
                 {'detail': e.message},
