@@ -86,6 +86,28 @@ class InventarioPrivatePermissionTest(APITestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_movimientos_producto_permite_listar_con_fecha_datetime(self):
+        producto = Producto.objects.create(
+            nombre="Producto movimiento",
+            precio=Decimal("12000.00"),
+            stock_actual=10,
+            stock_minimo=2,
+        )
+        MovimientoProducto.objects.create(
+            id_producto=producto,
+            tipo_movimiento="ENTRADA",
+            cantidad=3,
+            stock_anterior=7,
+            stock_posterior=10,
+        )
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.get("/api/inventario/movimientos-producto/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertIn("T", response.data[0]["fecha"])
+
 
 class ProduccionStockTest(TestCase):
 
